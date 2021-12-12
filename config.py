@@ -1,5 +1,4 @@
 import logging
-
 from redis import StrictRedis
 
 
@@ -15,7 +14,6 @@ class Config(object):
     # 添加redis配置
     REDIS_HOST = "127.0.0.1"
     REDIS_PORT = 6379
-
     # Session保存配置
     # 设置session类型
     SESSION_TYPE = "redis"

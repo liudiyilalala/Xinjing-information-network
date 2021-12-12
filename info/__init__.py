@@ -1,15 +1,15 @@
 import logging
 from logging.handlers import RotatingFileHandler
-
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from config import config
-from redis import StrictRedis
-from flask_wtf.csrf import CSRFProtect
 from flask_session import Session
+from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
+from redis import StrictRedis
+from config import config
 
 
 db = SQLAlchemy()
+redis_store = None  # type: StrictRedis
 
 
 def setup_log(config_name):
@@ -36,11 +36,16 @@ def create_app(config_name):
     # 初始化数据库
     db.init_app(app)
     # 初始化redis存储
+    global redis_store
     redis_store = StrictRedis(host=config[config_name].REDIS_HOST, port=config[config_name].REDIS_PORT)
     # 开启CSRF保护
     CSRFProtect(app)
     # 初始化Session配置
     Session(app)
+
+    # 注册蓝图
+    from info.modules.index import index_blu
+    app.register_blueprint(index_blu)
 
     return app
 
