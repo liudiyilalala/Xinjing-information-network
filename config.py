@@ -1,3 +1,5 @@
+import logging
+
 from redis import StrictRedis
 
 
@@ -25,6 +27,8 @@ class Config(object):
     SESSION_PERMANENT = False
     # 设置过期时间
     PERMANENT_SESSION_LIFETIME = 86400 * 2
+    # 设置日志等级
+    LOGIN_LEVEL = logging.DEBUG
 
 
 class DevelopmentConfig(Config):
@@ -35,6 +39,8 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     # 生产环境下的配置
     DEBUG = False
+    # 设置日志等级
+    LOGIN_LEVEL = logging.WARNING
 
 
 config = {
