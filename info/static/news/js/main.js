@@ -184,6 +184,9 @@ $(function() {
         $.ajax({
             url: "/passport/register",
             type: "post",
+            headers: {
+                "X-CSRFToken": getCookie('csrf_token')
+            },
             data: JSON.stringify(params),
             contentType: "application/json",
             success: function (resp) {
@@ -243,6 +246,9 @@ $(function() {
             url: "/passport/sms_code",
             // 请求方式
             method: "POST",
+            headers: {
+                "X-CSRFToken": getCookie('csrf_token')
+            },
             // 请求内容
             data: JSON.stringify(params),
             // 请求内容的数据类型
@@ -282,6 +288,14 @@ $(function() {
             }
         })
     }
+
+// 登出功能
+    function logout() {
+        $.get('/passport/logout', function (resp){
+            location.reload()
+        })
+    }
+
 
 // 调用该函数模拟点击左侧按钮
     function fnChangeMenu(n) {

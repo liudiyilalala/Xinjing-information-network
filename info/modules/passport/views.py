@@ -1,5 +1,7 @@
 import random
 import re
+from datetime import datetime
+
 from . import passport_blu
 from flask import abort
 from flask import request
@@ -9,14 +11,12 @@ from ... import redis_store, constants, db
 from flask import make_response
 from flask import jsonify
 from flask import session
-
-
-# 获取图片验证码
 from ...libs.yuntongxun.sms import CCP
 from ...models import User
 from ...utils.response_code import RET
 
 
+# 获取图片验证码
 @passport_blu.route('/image_code')
 def get_image_code():
     """
@@ -243,6 +243,31 @@ def login():
     session['mobile'] = user.mobile
     session['user_id'] = user.id
 
+    # 记录用户当前登陆时间
+    user.last_login = datetime.now()
+
+    # # 将时间保存到数据库
+    # try:
+    #     db.session.commit()
+    # except Exception as e:
+    #     db.session.rollback()
+    #     current_app.logger.error(e)
+
     # 5. 告知用户登陆成功
     return jsonify(errno=RET.OK, errmsg="登陆成功")
+
+
+# 登陆退出功能实现
+@passport_blu.route('/logout')
+def login_out():
+    """
+    将登陆数据从session中移除
+    :return:
+    """
+    # pop函数需要一个返回值，如果session中没有数据返回None
+    session.pop("user_id", None)
+    session.pop("mobile", None)
+    session.pop("nike_name", None)
+
+    return jsonify(errno=RET.OK, errmsg="退出成功")
 
