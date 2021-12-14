@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from redis import StrictRedis
 from config import config
-
+from info.utils.common import do_index_class
 
 db = SQLAlchemy()
 redis_store = None  # type: StrictRedis
@@ -50,6 +50,9 @@ def create_app(config_name):
         # 设置一个cookie
         response.set_cookie("csrf_token", csrf_token)
         return response
+
+    # 添加自定义过滤器
+    app.add_template_filter(do_index_class, "index_class")
 
     # 注册蓝图
     from info.modules.index import index_blu

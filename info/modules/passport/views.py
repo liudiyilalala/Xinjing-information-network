@@ -102,11 +102,12 @@ def send_sms_code():
     sms_code = "%06d" % random.randint(0, 999999)
 
     # 6. 将验证码发送给用户
-    result = CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60], "1")
-    # # current_app.logger.debug("短信验证码的内容：%s" % result)
-    # # 如果发送的验证码！=0，代表发送失败
-    if result != 0:
-        return jsonify(errno=RET.THIRDERR, errmsg="验证码发送失败，请重试")
+    # result = CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60], "1")
+    # # # current_app.logger.debug("短信验证码的内容：%s" % result)
+    # # # 如果发送的验证码！=0，代表发送失败
+    # if result != 0:
+    #     return jsonify(errno=RET.THIRDERR, errmsg="验证码发送失败，请重试")
+    current_app.logger.debug(sms_code)
 
     # 7. 将验证码保存在redis中，设置保存时间
     try:
