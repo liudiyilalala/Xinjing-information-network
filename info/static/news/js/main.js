@@ -99,7 +99,7 @@ $(function() {
         $(this).find('a')[0].click()
     })
 
-    // TODO 登录表单提交
+    //  登录表单提交
     $(".login_form_con").submit(function (e) {
         e.preventDefault()
         var mobile = $(".login_form #mobile").val()
@@ -116,6 +116,31 @@ $(function() {
         }
 
         // 发起登录请求
+        var params = {
+            "mobile": mobile,
+            "password": password
+        }
+
+        $.ajax({
+            url: "/passport/login",
+            type: "post",
+            contentType: "application/json",
+            // 在 header 中添加 csrf_token 的随机值
+            headers: {
+                "X-CSRFToken": getCookie('csrf_token')
+            },
+            data: JSON.stringify(params),
+            success: function (resp) {
+                if (resp.errno == "0") {
+                    // 代表登录成功
+                    location.reload()
+                }else {
+                    alert(resp.errmsg)
+                    $("#login-password-err").html(resp.errmsg)
+                    $("#login-password-err").show()
+                }
+            }
+        })
     })
 
 

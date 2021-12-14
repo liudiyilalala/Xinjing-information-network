@@ -43,7 +43,7 @@ def get_image_code():
     try:
         redis_store.set("ImageCodeId_" + get_image_id, text, constants.IMAGE_CODE_REDIS_EXPIRES)
     except Exception as e:
-        current_app.logging.error(e)
+        current_app.logger.error(e)
         abort(500)
 
     # 5. 返回图片验证码到页面
@@ -87,7 +87,7 @@ def send_sms_code():
     try:
         real_redis_date = redis_store.get("ImageCodeId_" + image_code_id)
     except Exception as e:
-        current_app.logging.error(e)
+        current_app.logger.error(e)
         return jsonify(errno=RET.DBERR, errmsg="数据库查询失败")
 
     # 图片验证码在数据库保存的期限是300s
@@ -102,18 +102,17 @@ def send_sms_code():
     sms_code = "%06d" % random.randint(0, 999999)
 
     # 6. 将验证码发送给用户
-    # result = CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60], "1")
-    # # # current_app.logging.debug("短信验证码的内容：%s" % result)
-    # # # 如果发送的验证码！=0，代表发送失败
-    # if result != 0:
-    #     return jsonify(errno=RET.THIRDERR, errmsg="验证码发送失败，请重试")
-    print(sms_code)
+    result = CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60], "1")
+    # # current_app.logger.debug("短信验证码的内容：%s" % result)
+    # # 如果发送的验证码！=0，代表发送失败
+    if result != 0:
+        return jsonify(errno=RET.THIRDERR, errmsg="验证码发送失败，请重试")
 
     # 7. 将验证码保存在redis中，设置保存时间
     try:
         redis_store.set("sms_code_" + mobile, sms_code, constants.SMS_CODE_REDIS_EXPIRES)
     except Exception as e:
-        current_app.logging.error(e)
+        current_app.logger.error(e)
         jsonify(errno=RET.DBERR, errmsg="短信验证码保存失败")
 
     # 8. 告知用户验证码发送成功
@@ -153,7 +152,7 @@ def register():
     try:
         phone = User.query.filter_by(mobile=mobile).first()
     except Exception as e:
-        current_app.logging.error(e)
+        current_app.logger.error(e)
         return jsonify(errno=RET.DBERR, errmsg="数据库查询错误")
     if phone:
         return jsonify(errno=RET.DATAEXIST, errmsg="该手机号已被注册")
@@ -163,7 +162,7 @@ def register():
     try:
         real_sms_date = redis_store.get("sms_code_" + mobile)
     except Exception as e:
-        current_app.logging.error(e)
+        current_app.logger.error(e)
         return jsonify(errno=RET.DBERR, errmsg="数据库查询失败")
 
     # 短信验证码在数据库保存的期限是300s
@@ -187,7 +186,7 @@ def register():
         db.session.add(user)
         db.session.commit()
     except Exception as e:
-        current_app.logging.error(e)
+        current_app.logger.error(e)
         db.session.rollback()
         return jsonify(errno=RET.DBERR, errmsg="数据保存失败")
 
@@ -200,4 +199,50 @@ def register():
     return jsonify(errno=RET.OK, errmsg="注册成功")
 
 
+# 实现登陆功能
+@passport_blu.route('/login', methods=["POST"])
+def login():
+    """
+    登陆逻辑实现
+    1. 获取参数。mobile(手机号)，password(用户输入的密码)
+    2. 校验参数. 获取的参数是否符合规则，判断是否已经注册过
+    3. 判断密码是否正确
+    4. 将登陆数据保存到session中
+    5. 告知用户登陆成功
+    :return:
+    """
+    # 1. 获取参数。mobile(手机号)，password(用户输入的密码)
+    return_dict = request.json
+    mobile = return_dict.get("mobile")
+    password = return_dict.get("password")
+
+    # 2. 校验参数. 获取的参数是否符合规则，判断是否已经注册过，判断密码是否正确
+    # 判断手机号是否符合规则
+    if not re.match("^1[35789][0-9]{9}$", mobile):
+        return jsonify(errno=RET.DATAERR, errmsg="手机号输入有误")
+
+    # 判断获取的参数是否有值
+    if not all([mobile, password]):
+        return jsonify(errno=RET.PARAMERR, errmsg="参数不全")
+
+    # 校验手机号是否注册
+    try:
+        user = User.query.filter_by(mobile=mobile).first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据库查询错误")
+    if not user:
+        return jsonify(errno=RET.NODATA, errmsg="该手机号未注册，请注册")
+
+    # 3. 判断密码是否正确
+    if not user.check_passowrd(password):
+        return jsonify(errno=RET.PWDERR, errmsg="密码输入错误")
+
+    # 4. 将登陆数据保存到session中
+    session['nike_name'] = user.nick_name
+    session['mobile'] = user.mobile
+    session['user_id'] = user.id
+
+    # 5. 告知用户登陆成功
+    return jsonify(errno=RET.OK, errmsg="登陆成功")
 
