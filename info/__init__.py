@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from redis import StrictRedis
 from config import config
-from info.utils.common import do_index_class
+
 
 db = SQLAlchemy()
 redis_store = None  # type: StrictRedis
@@ -52,6 +52,7 @@ def create_app(config_name):
         return response
 
     # 添加自定义过滤器
+    from info.utils.common import do_index_class
     app.add_template_filter(do_index_class, "index_class")
 
     # 注册蓝图
@@ -60,6 +61,9 @@ def create_app(config_name):
 
     from info.modules.passport import passport_blu
     app.register_blueprint(passport_blu)
+
+    from info.modules.news import news_blu
+    app.register_blueprint(news_blu)
 
     return app
 
