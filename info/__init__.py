@@ -6,6 +6,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from redis import StrictRedis
 from config import config
+from flask import render_template
+from flask import g
 
 
 db = SQLAlchemy()
@@ -51,6 +53,18 @@ def create_app(config_name):
         response.set_cookie("csrf_token", csrf_token)
         return response
 
+    # 统一设置404页面
+    from info.utils.common import user_login_data
+
+    @app.errorhandler(404)
+    @user_login_data
+    def page_not_found(e):
+        user = g.user
+        data = {
+            "user": user.to_dict() if user else None
+        }
+        return render_template("news/404.html", data=data)
+
     # 添加自定义过滤器
     from info.utils.common import do_index_class
     app.add_template_filter(do_index_class, "index_class")
@@ -64,6 +78,9 @@ def create_app(config_name):
 
     from info.modules.news import news_blu
     app.register_blueprint(news_blu)
+
+    from info.modules.profile import profile_blu
+    app.register_blueprint(profile_blu)
 
     return app
 

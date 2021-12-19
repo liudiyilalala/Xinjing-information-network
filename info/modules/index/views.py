@@ -91,7 +91,7 @@ def news_list():
         return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
 
     # 校验查询的是否是最新页面数据 （cid=1为最新页面数据） 查询的不是最新页面数据需要添加条件
-    filters = []
+    filters = [News.status == 0]
     if cid != 1:  # 如果cid不为1，需要将对应页面的cid添加到查询条件
         filters.append(News.category_id == cid)
 
